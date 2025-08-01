@@ -1,0 +1,347 @@
+{
+  "info": {
+    "_postman_id": "b3f3e4a5-9a8b-4c7d-8e6f-1d2a3b4c5d6e",
+    "name": "Uthao Parcel Delivery API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Sender\",\n    \"email\": \"sender1@test.com\",\n    \"password\": \"password123\",\n    \"phoneNumber\": \"01811111111\",\n    \"role\": \"sender\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user. Change the role to 'sender', 'receiver', or 'admin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Use this script to automatically save the token for the correct role\r",
+                  "const response = pm.response.json();\r",
+                  "const userRole = response.data.user.role;\r",
+                  "\r",
+                  "if (userRole === 'admin') {\r",
+                  "    pm.environment.set(\"ADMIN_TOKEN\", response.data.token);\r",
+                  "} else if (userRole === 'sender') {\r",
+                  "    pm.environment.set(\"SENDER_TOKEN\", response.data.token);\r",
+                  "} else if (userRole === 'receiver') {\r",
+                  "    pm.environment.set(\"RECEIVER_TOKEN\", response.data.token);\r",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"sender1@test.com\",\n    \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login a user to get their JWT. The Test script will automatically save the token to the correct environment variable based on the role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sender Routes",
+      "item": [
+        {
+          "name": "Create Parcel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "pm.environment.set(\"parcelId\", response.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SENDER_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"receiverName\": \"Test Receiver\",\n    \"receiverPhoneNumber\": \"01922222222\",\n    \"receiverAddress\": \"123 Receiver Lane, Dhaka\",\n    \"pickupAddress\": \"456 Sender Street, Dhaka\",\n    \"parcelDescription\": \"A box of books\",\n    \"parcelWeight\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Parcels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SENDER_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/my-parcels",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "my-parcels"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Parcel",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SENDER_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/{{parcelId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "{{parcelId}}", "cancel"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Receiver Routes",
+      "item": [
+        {
+          "name": "Get My Deliveries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{RECEIVER_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/my-deliveries",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "my-deliveries"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Delivery",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{RECEIVER_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/{{parcelId}}/confirm-delivery",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "{{parcelId}}", "confirm-delivery"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Routes",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"blocked\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/USER_ID_HERE/update-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "USER_ID_HERE", "update-status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Parcels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Parcel Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"in-transit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/{{parcelId}}/update-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "{{parcelId}}", "update-status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Routes",
+      "item": [
+        {
+          "name": "Track Parcel By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/parcels/track/TRACKING_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "parcels", "track", "TRACKING_ID_HERE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+}
