@@ -6,8 +6,20 @@ import { UserRoutes } from './app/modules/user/user.route'; // <-- Import user r
 
 const app: Application = express();
 
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:5173',          // Your local frontend for development
+  'https://uthao-client.vercel.app' // Your DEPLOYED frontend URL
+];
+
+const corsOptions = {
+  origin: allowedOrigins,
+};
+
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
+
+
 
 // Application Routes
 app.use('/api/auth', AuthRoutes);
